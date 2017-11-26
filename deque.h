@@ -1,4 +1,6 @@
-# include <iterator> //test submit, not for check
+// https://github.com/makut/homework
+
+# include <iterator>
 # include <cstring>
 
 template<typename T>

@@ -12,4 +12,5 @@ with open("output.txt", "r") as f:
 f = np.poly1d(np.polyfit(x, y, 1))
 
 plt.plot(x, y, 'o', x, f(x), '-')
+
 plt.show()

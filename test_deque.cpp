@@ -1,5 +1,6 @@
 # include <iostream>
 # include <vector>
+# include <fstream>
 # include <cstdlib>
 # include <ctime>
 # include <gtest/gtest.h>
@@ -121,7 +122,7 @@ void randomOperation(Deque<T> &d, SillyDeque<T> &sd, const T &random_value)
     }
 }
 
-TEST(testCaseName, testName)
+TEST(DequeTest, PushPopTest)
 {
     Deque<int> d;
     SillyDeque<int> sd;
@@ -131,6 +132,31 @@ TEST(testCaseName, testName)
         randomOperation(d, sd, rand());
         EXPECT_TRUE(check(d, sd));
     }
+}
+
+TEST(DequeTest, TimeTest)
+{
+    std::ofstream out("output.txt");
+    for (int size = 1e5; size <= 5e7; size *= 1.05)
+    {
+        out << size << " ";
+        std::clock_t start = std::clock();
+        Deque<int> d;
+        for (int i = 0; i < size; i++)
+        {
+            if (d.empty() || !rand() % 3)
+            {
+                d.push_back(rand());
+            }
+            else
+            {
+                d.pop_front();
+            }
+        }
+        std::clock_t finish = std::clock();
+        out << (double)(finish - start) / CLOCKS_PER_SEC << "\n";
+    }
+    out.close();
 }
 
 int main(int argc, char **argv)

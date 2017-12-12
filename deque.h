@@ -7,28 +7,37 @@ template<typename T>
 class Stack
 {
 private:
-    size_t capacity, head;
-    T *elements, *temporal;
+    size_t capacity_, head_;
+    T *elements_, *temporal_;
     static const size_t default_size;
-public:
-    Stack(const size_t size = default_size) : capacity(size), head(0)
+
+    void changeCapacity(const int &new_capacity)
     {
-        elements = new T[size];
+       temporal_ = new T[new_capacity];
+       memcpy(temporal_, elements_, std::max(default_size, head_) * sizeof(T));
+       delete[] elements_;
+       elements_ = temporal_;
+       capacity_ = new_capacity;
+    }
+public:
+    Stack(const size_t size = default_size) : capacity_(size), head_(0)
+    {
+        elements_ = new T[size];
     }
 
-    Stack(const size_t size, const T *new_elements) : capacity(std::max(size, default_size)), head(size)
+    Stack(const size_t size, const T *new_elements_) : capacity_(std::max(size, default_size)), head_(size)
     {
-        elements = new T[std::max(size, default_size)];
-        memcpy(elements, new_elements, size * sizeof(T));
+        elements_ = new T[std::max(size, default_size)];
+        memcpy(elements_, new_elements_, size * sizeof(T));
     }
 
     Stack& operator=(const Stack &other)
     {
         if (this == &other) return *this;
-        capacity = other.capacity;
-        head = other.head;
-        elements = new T[capacity];
-        memcpy(elements, other.elements, capacity * sizeof(T));
+        capacity_ = other.capacity_;
+        head_ = other.head_;
+        elements_ = new T[capacity_];
+        memcpy(elements_, other.elements_, capacity_ * sizeof(T));
         return *this;
     }
 
@@ -39,64 +48,56 @@ public:
 
     ~Stack()
     {
-        delete[] elements;
+        delete[] elements_;
     }
 
     size_t size() const
     {
-        return head;
+        return head_;
     }
 
     void push(const T &added)
     {
-        if (head == capacity)
+        if (head_ == capacity_)
         {
-            temporal = new T[capacity * 2];
-            memcpy(temporal, elements, capacity * sizeof(T));
-            delete[] elements;
-            elements = temporal;
-            capacity *= 2;
+            changeCapacity(capacity_ * 2);
         }
-        elements[head++] = added;
+        elements_[head_++] = added;
     }
 
     T pop()
     {
-        T result = elements[--head];
-        if (head <= capacity / 4 && capacity > default_size)
+        T result = elements_[--head_];
+        if (head_ <= capacity_ / 4 && capacity_ > default_size)
         {
-            temporal = new T[capacity / 2];
-            memcpy(temporal, elements, capacity / 4 * sizeof(T));
-            delete[] elements;
-            elements = temporal;
-            capacity /= 2;
+            changeCapacity(capacity_ / 2);
         }
         return result;
     }
 
     T& top()
     {
-        return elements[head - 1];
+        return elements_[head_ - 1];
     }
 
     const T& top() const
     {
-        return elements[head - 1];
+        return elements_[head_ - 1];
     }
 
     T& operator[](const size_t &index)
     {
-        return elements[index];
+        return elements_[index];
     }
 
     const T& operator[](const size_t &index) const
     {
-        return elements[index];
+        return elements_[index];
     }
 
     bool empty() const
     {
-        return (head == 0);
+        return (head_ == 0);
     }
 };
 template<typename T>
@@ -106,7 +107,7 @@ template<typename T>
 class Deque
 {
 private:
-    Stack<T> left, right;
+    Stack<T> left_, right_;
 
     template<typename Type, typename Ptr>
     class DequeIterator_ : public std::iterator<std::random_access_iterator_tag, Type>
@@ -232,6 +233,29 @@ private:
             return &((*seq)[index]);
         }
     };
+
+    void shift_(Stack<T> &from, Stack<T> &to)
+    {
+        size_t capacity_ = from.size();
+        if (capacity_ == 1)
+        {
+            to.push(from.pop());
+            return;
+        }
+        Stack<T> temporal_;
+        for (size_t i = 0; i < capacity_ / 2; i++)
+        {
+            temporal_.push(from.pop());
+        }
+        while (!from.empty())
+        {
+            to.push(from.pop());
+        }
+        while (!temporal_.empty())
+        {
+            from.push(temporal_.pop());
+        }
+    }
 public:
     typedef DequeIterator_<T, Deque<T>*> iterator;
     typedef DequeIterator_<const T, const Deque<T>*> const_iterator;
@@ -243,8 +267,8 @@ public:
     Deque& operator=(const Deque &other)
     {
         if (this == &other) return *this;
-        left = other.left;
-        right = other.right;
+        left_ = other.left_;
+        right_ = other.right_;
         return *this;
     }
 
@@ -255,107 +279,76 @@ public:
 
     void push_back(const T &x)
     {
-        left.push(x);
+        left_.push(x);
     }
 
     void push_front(const T &x)
     {
-        right.push(x);
+        right_.push(x);
     }
 
     T pop_back()
     {
-        if (left.empty())
+        if (left_.empty())
         {
-            size_t capacity = right.size();
-            if (capacity == 1)
-            {
-                return right.pop();
-            }
-            Stack<T> temporal;
-            for (size_t i = 0; i < capacity / 2; i++)
-            {
-                temporal.push(right.pop());
-            }
-            while (!right.empty())
-            {
-                left.push(right.pop());
-            }
-            while (!temporal.empty())
-            {
-                right.push(temporal.pop());
-            }
+            shift_(right_, left_);
         }
-        return left.pop();
+        return left_.pop();
     }
 
     T pop_front()
     {
-        if (right.empty())
+        if (right_.empty())
         {
-            size_t capacity = left.size();
-            if (capacity == 1) return left.pop();
-            Stack<T> temporal;
-            for (size_t i = 0; i < capacity / 2; i++)
-            {
-                temporal.push(left.pop());
-            }
-            while (!left.empty())
-            {
-                right.push(left.pop());
-            }
-            while (!temporal.empty())
-            {
-                left.push(temporal.pop());
-            }
+            shift_(left_, right_);
         }
-        return right.pop();
+        return right_.pop();
     }
 
     bool empty() const
     {
-        return (left.empty() && right.empty());
+        return (left_.empty() && right_.empty());
     }
 
     size_t size() const
     {
-        return (left.size() + right.size());
+        return (left_.size() + right_.size());
     }
 
     T& back()
     {
-        if (!left.empty()) return left.top();
-        else return right[0];
+        if (!left_.empty()) return left_.top();
+        else return right_[0];
     }
 
     const T& back() const
     {
-        if (!left.empty()) return left.top();
-        else return right[0];
+        if (!left_.empty()) return left_.top();
+        else return right_[0];
     }
 
     T& front()
     {
-        if (!right.empty()) return right.top();
-        else return left[0];
+        if (!right_.empty()) return right_.top();
+        else return left_[0];
     }
 
     const T& front() const
     {
-        if (!right.empty()) return right.top();
-        else return left[0];
+        if (!right_.empty()) return right_.top();
+        else return left_[0];
     }
 
     T& operator[](const size_t &index)
     {
-        if (index < right.size()) return right[right.size() - index - 1];
-        else return left[index - right.size()];
+        if (index < right_.size()) return right_[right_.size() - index - 1];
+        else return left_[index - right_.size()];
     }
 
     const T& operator[](const size_t &index) const
     {
-        if (index < right.size()) return right[right.size() - index - 1];
-        else return left[index - right.size()];
+        if (index < right_.size()) return right_[right_.size() - index - 1];
+        else return left_[index - right_.size()];
     }
 
     iterator begin()

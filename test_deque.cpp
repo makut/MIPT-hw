@@ -80,45 +80,75 @@ public:
 template<typename T>
 bool check(const Deque<T> &d, const SillyDeque<T> &sd)
 {
-    if (d.size() != sd.size()) return false;
-    if (d.empty() != sd.empty()) return false;
-    if (!d.empty() && (d.back() != sd.back())) return false;
-    if (!d.empty() && (d.front() != sd.front())) return false;
+    if (d.size() != sd.size())
+        return false;
+    if (d.empty() != sd.empty())
+        return false;
+    if (!d.empty() && (d.back() != sd.back()))
+        return false;
+    if (!d.empty() && (d.front() != sd.front()))
+        return false;
     typename Deque<T>::const_iterator it = d.begin();
     typename Deque<T>::const_reverse_iterator rit = --d.rend();
     for (size_t i = 0; i < d.size(); i++)
     {
-        if (d[i] != sd[i]) return false;
-        if (sd[i] != *it || sd[i] != *rit) return false;
+        if (d[i] != sd[i])
+            return false;
+        if (sd[i] != *it || sd[i] != *rit)
+            return false;
         ++it; --rit;
+    }
+    if (d.empty())
+        return true;
+    it = --d.end();
+    rit = d.rbegin();
+    for (size_t i = d.size() - 1; i >= 0; --i)
+    {
+        if (d[i] != sd[i])
+            return false;
+        if (sd[i] != *it || sd[i] != *rit)
+            return false;
+        --it; ++rit;
     }
     return true;
 }
 
+enum Operations
+{
+    PUSH_BACK = 0,
+    PUSH_FRONT = 1,
+    POP_BACK = 3,
+    POP_FRONT = 4
+};
+
 template<typename T>
 void randomOperation(Deque<T> &d, SillyDeque<T> &sd, const T &random_value)
 {
-    int operation = rand() % 4;
+    Operations operation = static_cast<Operations>(rand() % 4);
     switch(operation)
     {
-    case 0:
+    case PUSH_BACK:
         d.push_back(random_value);
         sd.push_back(random_value);
-    case 1:
+        break;
+    case PUSH_FRONT:
         d.push_front(random_value);
         sd.push_front(random_value);
-    case 2:
+        break;
+    case POP_BACK:
         if (!d.empty())
         {
             d.pop_back();
             sd.pop_back();
         }
-    case 3:
+        break;
+    case POP_FRONT:
         if (!d.empty())
         {
             d.pop_front();
             sd.pop_front();
         }
+        break;
     }
 }
 
@@ -127,10 +157,25 @@ TEST(DequeTest, PushPopTest)
     Deque<int> d;
     SillyDeque<int> sd;
     EXPECT_TRUE(check(d, sd));
-    for (int i = 0; i < 1000; i++)
+    for (int i = 0; i < 1; i++)
     {
         randomOperation(d, sd, rand());
         EXPECT_TRUE(check(d, sd));
+    }
+}
+
+void executeRandomOperations(Deque<int> &d, const int &size, const bool &random_modulo)
+{
+    for (int i = 0; i < size; i++)
+    {
+        if (d.empty() || (rand() % 3) == random_modulo)
+        {
+            d.push_back(rand());
+        }
+        else
+        {
+            d.pop_front();
+        }
     }
 }
 
@@ -142,17 +187,8 @@ TEST(DequeTest, TimeTest)
         out << size << " ";
         std::clock_t start = std::clock();
         Deque<int> d;
-        for (int i = 0; i < size; i++)
-        {
-            if (d.empty() || !rand() % 3)
-            {
-                d.push_back(rand());
-            }
-            else
-            {
-                d.pop_front();
-            }
-        }
+        executeRandomOperations(d, size / 2, false);
+        executeRandomOperations(d, size / 2, true);
         std::clock_t finish = std::clock();
         out << (double)(finish - start) / CLOCKS_PER_SEC << "\n";
     }

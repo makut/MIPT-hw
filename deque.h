@@ -29,7 +29,6 @@ public:
     Stack(const size_t size, const T *new_elements_) : capacity_(std::max(size, DEFAULT_SIZE_)), head_(size)
     {
         elements_ = new T[std::max(size, DEFAULT_SIZE_)];
-        memcpy(elements_, new_elements_, size * sizeof(T));
         std::copy(new_elements_, new_elements_ + size, elements_);
     }
 

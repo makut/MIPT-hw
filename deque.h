@@ -2,6 +2,7 @@
 
 # include <iterator>
 # include <cstring>
+# include <algorithm>
 
 template<typename T>
 class Stack
@@ -9,26 +10,27 @@ class Stack
 private:
     size_t capacity_, head_;
     T *elements_, *temporal_;
-    static const size_t default_size;
+    static const size_t DEFAULT_SIZE_;
 
     void changeCapacity(const int &new_capacity)
     {
        temporal_ = new T[new_capacity];
-       memcpy(temporal_, elements_, std::max(default_size, head_) * sizeof(T));
+       std::copy(elements_, elements_ + std::max(DEFAULT_SIZE_, head_), temporal_);
        delete[] elements_;
        elements_ = temporal_;
        capacity_ = new_capacity;
     }
 public:
-    Stack(const size_t size = default_size) : capacity_(size), head_(0)
+    explicit Stack(const size_t size = DEFAULT_SIZE_) : capacity_(size), head_(0)
     {
         elements_ = new T[size];
     }
 
-    Stack(const size_t size, const T *new_elements_) : capacity_(std::max(size, default_size)), head_(size)
+    Stack(const size_t size, const T *new_elements_) : capacity_(std::max(size, DEFAULT_SIZE_)), head_(size)
     {
-        elements_ = new T[std::max(size, default_size)];
+        elements_ = new T[std::max(size, DEFAULT_SIZE_)];
         memcpy(elements_, new_elements_, size * sizeof(T));
+        std::copy(new_elements_, new_elements_ + size, elements_);
     }
 
     Stack& operator=(const Stack &other)
@@ -68,7 +70,7 @@ public:
     T pop()
     {
         T result = elements_[--head_];
-        if (head_ <= capacity_ / 4 && capacity_ > default_size)
+        if (head_ <= capacity_ / 4 && capacity_ > DEFAULT_SIZE_)
         {
             changeCapacity(capacity_ / 2);
         }
@@ -101,7 +103,32 @@ public:
     }
 };
 template<typename T>
-const size_t Stack<T>::default_size = 10;
+const size_t Stack<T>::DEFAULT_SIZE_ = 10;
+
+template<typename T>
+void shift_(Stack<T> &from, Stack<T> &to)
+{
+    size_t capacity_ = from.size();
+    if (capacity_ == 1)
+    {
+        to.push(from.pop());
+        return;
+    }
+    Stack<T> temporal_;
+    for (size_t i = 0; i < capacity_ / 2; i++)
+    {
+        temporal_.push(from.pop());
+    }
+    while (!from.empty())
+    {
+        to.push(from.pop());
+    }
+    while (!temporal_.empty())
+    {
+        from.push(temporal_.pop());
+    }
+}
+
 
 template<typename T>
 class Deque
@@ -113,28 +140,28 @@ private:
     class DequeIterator_ : public std::iterator<std::random_access_iterator_tag, Type>
     {
     private:
-        size_t index;
+        size_t index_;
         Ptr seq;
     public:
         typedef typename std::iterator_traits<DequeIterator_>::difference_type diff_type;
-        DequeIterator_(Ptr sequence = NULL, size_t ind = 0) : index(ind), seq(sequence) {}
-        DequeIterator_(const DequeIterator_ &other) : index(other.index), seq(other.seq) {}
+        DequeIterator_(Ptr sequence = NULL, size_t ind = 0) : index_(ind), seq(sequence) {}
+        DequeIterator_(const DequeIterator_ &other) : index_(other.index_), seq(other.seq) {}
 
         DequeIterator_& operator=(const DequeIterator_ &other)
         {
-            index = other.index;
+            index_ = other.index_;
             seq = other.seq;
             return *this;
         }
 
         Type& operator*() const
         {
-            return (*seq)[index];
+            return (*seq)[index_];
         }
 
         bool operator==(const DequeIterator_ &other) const
         {
-            return (seq == other.seq && index == other.index);
+            return (seq == other.seq && index_ == other.index_);
         }
 
         bool operator!=(const DequeIterator_ &other) const
@@ -144,7 +171,7 @@ private:
 
         diff_type operator-(const DequeIterator_ &other) const
         {
-            return (index - other.index);
+            return (index_ - other.index_);
         }
 
         bool operator<(const DequeIterator_ &other) const
@@ -168,39 +195,39 @@ private:
 
         DequeIterator_& operator++()
         {
-            ++index;
+            ++index_;
             return *this;
         }
 
         DequeIterator_ operator++(int)
         {
             DequeIterator_ cpy = *this;
-            ++index;
+            ++index_;
             return cpy;
         }
 
         DequeIterator_& operator--()
         {
-            --index;
+            --index_;
             return *this;
         }
 
         DequeIterator_ operator--(int)
         {
             DequeIterator_ cpy = *this;
-            --index;
+            --index_;
             return cpy;
         }
 
         DequeIterator_ operator+(const diff_type &n) const
         {
-            DequeIterator_ ans(seq, index + n);
+            DequeIterator_ ans(seq, index_ + n);
             return ans;
         }
 
         friend DequeIterator_ operator+(const diff_type &n, const DequeIterator_ &it)
         {
-            DequeIterator_ ans(it.seq, it.index + n);
+            DequeIterator_ ans(it.seq, it.index_ + n);
             return ans;
         }
 
@@ -215,47 +242,24 @@ private:
 
         void operator+=(const diff_type &n)
         {
-            index += n;
+            index_ += n;
         }
 
         void operator-=(const diff_type &n)
         {
-            index -= n;
+            index_ -= n;
         }
 
         Type* operator->()
         {
-            return &((*seq)[index]);
+            return &((*seq)[index_]);
         }
 
         const Type* operator->() const
         {
-            return &((*seq)[index]);
+            return &((*seq)[index_]);
         }
     };
-
-    void shift_(Stack<T> &from, Stack<T> &to)
-    {
-        size_t capacity_ = from.size();
-        if (capacity_ == 1)
-        {
-            to.push(from.pop());
-            return;
-        }
-        Stack<T> temporal_;
-        for (size_t i = 0; i < capacity_ / 2; i++)
-        {
-            temporal_.push(from.pop());
-        }
-        while (!from.empty())
-        {
-            to.push(from.pop());
-        }
-        while (!temporal_.empty())
-        {
-            from.push(temporal_.pop());
-        }
-    }
 public:
     typedef DequeIterator_<T, Deque<T>*> iterator;
     typedef DequeIterator_<const T, const Deque<T>*> const_iterator;

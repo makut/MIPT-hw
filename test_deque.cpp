@@ -102,7 +102,7 @@ bool check(const Deque<T> &d, const SillyDeque<T> &sd)
         return true;
     it = --d.end();
     rit = d.rbegin();
-    for (size_t i = d.size() - 1; i >= 0; --i)
+    for (int i = static_cast<int>(d.size()) - 1; i >= 0; --i)
     {
         if (d[i] != sd[i])
             return false;
@@ -117,8 +117,8 @@ enum Operations
 {
     PUSH_BACK = 0,
     PUSH_FRONT = 1,
-    POP_BACK = 3,
-    POP_FRONT = 4
+    POP_BACK = 2,
+    POP_FRONT = 3
 };
 
 template<typename T>
@@ -157,7 +157,7 @@ TEST(DequeTest, PushPopTest)
     Deque<int> d;
     SillyDeque<int> sd;
     EXPECT_TRUE(check(d, sd));
-    for (int i = 0; i < 1; i++)
+    for (int i = 0; i < 1000; i++)
     {
         randomOperation(d, sd, rand());
         EXPECT_TRUE(check(d, sd));

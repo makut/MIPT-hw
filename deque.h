@@ -39,6 +39,7 @@ public:
         head_ = other.head_;
         elements_ = new T[capacity_];
         memcpy(elements_, other.elements_, capacity_ * sizeof(T));
+        std::copy(other.elements_, other.elements_ + capacity_, elements_);
         return *this;
     }
 

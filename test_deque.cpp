@@ -164,17 +164,23 @@ TEST(DequeTest, PushPopTest)
     }
 }
 
-void executeRandomOperations(Deque<int> &d, const int &size, const bool &random_modulo)
+void executeRandomOperations(Deque<int> &d, const int &size, const bool &random_modulo, bool operation)
 {
     for (int i = 0; i < size; i++)
     {
         if (d.empty() || (rand() % 3) == random_modulo)
         {
-            d.push_back(rand());
+            if (operation)
+                d.push_back(rand());
+            else
+                d.push_front(rand());
         }
         else
         {
-            d.pop_front();
+            if (operation)
+                d.pop_front();
+            else
+                d.pop_back();
         }
     }
 }
@@ -187,8 +193,10 @@ TEST(DequeTest, TimeTest)
         out << size << " ";
         std::clock_t start = std::clock();
         Deque<int> d;
-        executeRandomOperations(d, size / 2, false);
-        executeRandomOperations(d, size / 2, true);
+        executeRandomOperations(d, size / 2, false, true);
+        executeRandomOperations(d, size / 2, true, true);
+        executeRandomOperations(d, size / 2, false, false);
+        executeRandomOperations(d, size / 2, true, false);
         std::clock_t finish = std::clock();
         out << (double)(finish - start) / CLOCKS_PER_SEC << "\n";
     }

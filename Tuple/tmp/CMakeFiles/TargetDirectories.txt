@@ -1,3 +1,0 @@
-/home/makut/MIPT/2/Tuple/tmp/CMakeFiles/rebuild_cache.dir
-/home/makut/MIPT/2/Tuple/tmp/CMakeFiles/Test.dir
-/home/makut/MIPT/2/Tuple/tmp/CMakeFiles/edit_cache.dir
